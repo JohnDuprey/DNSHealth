@@ -2,20 +2,20 @@ function Get-ServerCertificateValidation {
     <#
     .SYNOPSIS
     Get HTTPS certificate and chain information for Url
-    
+
     .DESCRIPTION
     Obtains certificate data from .Net HttpClient and builds certificate chain to
     verify validity and revocation status
-    
+
     .PARAMETER Url
     Url to check
-    
+
     .PARAMETER FollowRedirect
     Follow HTTP redirects
-    
+
     .EXAMPLE
     PS> Get-ServerCertificateValidation -Url https://expired.badssl.com
-    
+
     #>
     Param(
         [Parameter(Mandatory = $true)]
@@ -68,7 +68,7 @@ namespace CyberDrain.CIPP {
     }
 }
 '@
-    try { 
+    try {
         if (!('CyberDrain.CIPP.CertificateCheck' -as [type])) {
             Add-Type -TypeDefinition $source -Language CSharp
         }

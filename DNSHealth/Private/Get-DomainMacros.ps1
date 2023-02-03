@@ -3,7 +3,7 @@ function Get-DomainMacros {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Domain,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$MacroExpand
     )

@@ -12,7 +12,7 @@ function Set-DnsResolver {
                 [PSCustomObject]@{
                     Resolver      = $Resolver
                     BaseUri       = 'https://dns.google/resolve'
-                    QueryTemplate = '{0}?name={1}&type={2}' 
+                    QueryTemplate = '{0}?name={1}&type={2}'
                 }
             }
             'CloudFlare' {

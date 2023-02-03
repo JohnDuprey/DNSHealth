@@ -2,13 +2,13 @@ function Read-DmarcPolicy {
     <#
     .SYNOPSIS
     Resolve and validate DMARC policy
-    
+
     .DESCRIPTION
     Query domain for DMARC policy (_dmarc.domain.com) and parse results. Record is checked for issues.
-    
+
     .PARAMETER Domain
     Domain to process DMARC policy
-    
+
     .EXAMPLE
     PS> Read-DmarcPolicy -Domain gmail.com
 
@@ -28,7 +28,7 @@ function Read-DmarcPolicy {
     ValidationPasses : {Aggregate reports are being sent}
     ValidationWarns  : {Policy is not being enforced, Subdomain policy is only partially enforced with quarantine, Failure report option 0 will only generate a report on both SPF and DKIM misalignment. It is recommended to set this value to 1}
     ValidationFails  : {}
-    
+
     #>
     [CmdletBinding()]
     Param(
@@ -75,7 +75,7 @@ function Read-DmarcPolicy {
         RecordType = 'TXT'
         Domain     = "_dmarc.$Domain"
     }
-    
+
     # Resolve DMARC record
 
     $Query = Resolve-DnsHttpsQuery @DnsQuery -ErrorAction Stop
@@ -84,7 +84,7 @@ function Read-DmarcPolicy {
     $Query.Answer | Where-Object { $_.data -match '^v=DMARC1' } | ForEach-Object {
         $DmarcRecord = $_.data
         $DmarcAnalysis.Record = $DmarcRecord
-        $RecordCount++  
+        $RecordCount++
     }
 
     if ($Query.Status -eq 2 -and $Query.AD -eq $false) {
@@ -96,7 +96,7 @@ function Read-DmarcPolicy {
     }
 
     elseif (($Query.Answer | Measure-Object).Count -eq 1 -and $RecordCount -eq 0) {
-        $ValidationFails.Add("The record must begin with 'v=DMARC1'.") | Out-Null 
+        $ValidationFails.Add("The record must begin with 'v=DMARC1'.") | Out-Null
     }
 
     elseif ($RecordCount -gt 1) {
@@ -128,7 +128,7 @@ function Read-DmarcPolicy {
                 $DmarcAnalysis.Policy = $Tag.Value
             }
             'sp' {
-                # Subdomain policy, defaults to policy record 
+                # Subdomain policy, defaults to policy record
                 $DmarcAnalysis.SubdomainPolicy = $Tag.Value
             }
             'rua' {
@@ -173,7 +173,7 @@ function Read-DmarcPolicy {
             'fo' {
                 # Failure reporting options
                 $DmarcAnalysis.FailureReport = $Tag.Value
-            } 
+            }
             'pct' {
                 # Percentage of email to check
                 $DmarcAnalysis.Percent = [int]$Tag.Value
@@ -212,7 +212,7 @@ function Read-DmarcPolicy {
                     $ValidationWarns.Add("Report DMARC policy for $Domain is missing from $ReportDomain, reports will not be delivered. Expected record: '$Domain._report._dmarc.$ReportDomain' - Expected value: 'v=DMARC1;'") | Out-Null
                     $ReportDomainsPass = $false
                 }
-                
+
                 elseif ($ReportDmarcRecord -notmatch '^v=DMARC1') {
                     $ValidationWarns.Add("Report DMARC policy for $Domain is missing from $ReportDomain, reports will not be delivered. Expected record: '$Domain._report._dmarc.$ReportDomain' - Expected value: 'v=DMARC1;'.") | Out-Null
                     $ReportDomainsPass = $false
@@ -246,7 +246,7 @@ function Read-DmarcPolicy {
 
         # Check report format
         if ($ReportFormatValues -notcontains $DmarcAnalysis.ReportFormat) { $ValidationFails.Add("The report format '$($DmarcAnalysis.ReportFormat)' is not supported.") | Out-Null }
- 
+
         # Check forensic reports and failure options
         $ForensicCount = ($DmarcAnalysis.ForensicEmails | Measure-Object | Select-Object -ExpandProperty Count)
         if ($ForensicCount -eq 0 -and $DmarcAnalysis.FailureReport -ne '') { $ValidationWarns.Add('Forensic email reports recipients are not defined and failure report options are set. No reports will be sent. This is not an issue unless you are expecting forensic reports.') | Out-Null }

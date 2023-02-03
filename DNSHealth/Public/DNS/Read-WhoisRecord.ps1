@@ -2,22 +2,22 @@ function Read-WhoisRecord {
     <#
     .SYNOPSIS
     Reads Whois record data for queried information
-    
+
     .DESCRIPTION
     Connects to top level registrar servers (IANA, ARIN) and performs recursion to find Whois data
-    
+
     .PARAMETER Query
     Whois query to perform (e.g. microsoft.com)
-    
+
     .PARAMETER Server
     Whois server to query, defaults to whois.iana.org
-    
+
     .PARAMETER Port
     Whois server port, default 43
-    
+
     .EXAMPLE
     PS> Read-WhoisRecord -Query microsoft.com
-    
+
     #>
     [CmdletBinding()]
     param (
@@ -64,7 +64,7 @@ function Read-WhoisRecord {
         # Read response from stream
         $Reader = New-Object System.IO.StreamReader $Stream, [System.Text.Encoding]::ASCII
         $Raw = $Reader.ReadToEnd()
-        
+
         # Split comments and parse raw whois results
         $data, $comment = $Raw -split '(>>>|\n\s+--)'
         $PropMatches = [regex]::Matches($data, $WhoisRegex, ([System.Text.RegularExpressions.RegexOptions]::MultiLine, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase))
@@ -74,7 +74,7 @@ function Read-WhoisRecord {
 
         # Create ordered list for properties
         $Results = [ordered]@{}
-        foreach ($PropMatch in $PropMatches) { 
+        foreach ($PropMatch in $PropMatches) {
             $PropName = $PropMatch.Groups['PropName'].value
             if ($Results.Contains($PropName)) {
                 $PropertyCounts.$PropName++
@@ -119,12 +119,12 @@ function Read-WhoisRecord {
         }
 
         # Recurse through referrals
-        if ($HasReferral) {    
+        if ($HasReferral) {
             if ($Server -ne $ReferralServer) {
                 $LastResult = $Results
                 $Results = Read-WhoisRecord -Query $Query -Server $ReferralServer -Port $Port
-                if ($Results._Raw -Match '(No match|Not Found|No Data|The queried object does not exist)' -and $TopLevelReferrers -notcontains $Server) { 
-                    $Results = $LastResult 
+                if ($Results._Raw -Match '(No match|Not Found|No Data|The queried object does not exist)' -and $TopLevelReferrers -notcontains $Server) {
+                    $Results = $LastResult
                 }
 
                 else {
@@ -132,9 +132,9 @@ function Read-WhoisRecord {
                         $ReferralServers.Add($s) | Out-Null
                     }
                 }
-                
+
             }
-        } 
+        }
 
         else {
             if ($Results._Raw -Match '(No match|Not Found|No Data)') {
@@ -153,7 +153,7 @@ function Read-WhoisRecord {
     catch {
         Write-Error $_.Exception.Message
     }
-    
+
     finally {
         IF ($Stream) {
             $Stream.Close()
@@ -163,7 +163,7 @@ function Read-WhoisRecord {
 
     # Collect referral server list
     $Results._ReferralServers = $ReferralServers
-    
+
     # Convert to json and back to preserve object order
     $WhoisResults = $Results | ConvertTo-Json | ConvertFrom-Json
 

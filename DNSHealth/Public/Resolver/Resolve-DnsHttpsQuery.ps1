@@ -2,23 +2,23 @@ function Resolve-DnsHttpsQuery {
     <#
     .SYNOPSIS
     Resolves DNS record using DoH JSON query
-    
+
     .DESCRIPTION
     This function uses Google or Cloudflare DoH REST APIs to resolve DNS records
-    
+
     .PARAMETER Domain
     Domain to query
-    
+
     .PARAMETER RecordType
     Type of record - Examples: A, CNAME, MX, TXT
-    
+
     .EXAMPLE
     PS> Resolve-DnsHttpsQuery -Domain google.com -RecordType A
-    
+
     name        type TTL data
     ----        ---- --- ----
     google.com.    1  30 142.250.80.110
-    
+
     #>
     [cmdletbinding()]
     Param(
@@ -26,7 +26,7 @@ function Resolve-DnsHttpsQuery {
         [string]$Domain,
 
         [string]$MacroExpand,
-        
+
         [Parameter()]
         [string]$RecordType = 'A'
     )
@@ -34,7 +34,7 @@ function Resolve-DnsHttpsQuery {
     if (!$script:DnsResolver) {
         Set-DnsResolver
     }
-    
+
     $Resolver = $script:DnsResolver.Resolver
     $BaseUri = $script:DnsResolver.BaseUri
     $QueryTemplate = $script:DnsResolver.QueryTemplate
@@ -56,7 +56,7 @@ function Resolve-DnsHttpsQuery {
         try {
             $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -ErrorAction Stop
         }
-        
+
         catch {
             Start-Sleep -Milliseconds 300
         }
@@ -70,8 +70,8 @@ function Resolve-DnsHttpsQuery {
                 $_.data = $_.data -replace '"' -replace '\s+', ' '
             }
         }
-        $Results.Answer = $Results.Answer | Where-Object { $_.type -eq 16 } 
+        $Results.Answer = $Results.Answer | Where-Object { $_.type -eq 16 }
     }
-    
+
     return $Results
 }

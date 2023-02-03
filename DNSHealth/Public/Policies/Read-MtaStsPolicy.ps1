@@ -2,16 +2,16 @@ function Read-MtaStsPolicy {
     <#
     .SYNOPSIS
     Resolve and validate MTA-STS policy
-    
+
     .DESCRIPTION
     Retrieve mta-sts.txt from .well-known directory on domain
-    
+
     .PARAMETER Domain
-    Domain to process MTA-STS policy 
-    
+    Domain to process MTA-STS policy
+
     .EXAMPLE
     PS> Read-MtaStsPolicy -Domain gmail.com
-    #>   
+    #>
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory = $true)]
@@ -95,8 +95,8 @@ function Read-MtaStsPolicy {
 
     # Check policy for issues
     if ($PolicyExists) {
-        if ($StsPolicyAnalysis.Version -ne 'STSv1') { 
-            $ValidationFails.Add("Version must be STSv1 - found $($StsPolicyEntry.Value)") | Out-Null 
+        if ($StsPolicyAnalysis.Version -ne 'STSv1') {
+            $ValidationFails.Add("Version must be STSv1 - found $($StsPolicyEntry.Value)") | Out-Null
         }
         if ($StsPolicyAnalysis.Version -eq '') {
             $ValidationFails.Add('Version is missing from policy') | Out-Null
@@ -104,8 +104,8 @@ function Read-MtaStsPolicy {
         if ($StsPolicyModes -notcontains $StsPolicyAnalysis.Mode) {
             $ValidationFails.Add(('Policy mode "{0}" is not valid. (Options: {1})' -f $StsPolicyAnalysis.Mode, $StsPolicyModes -join ', '))
         }
-        if ($StsPolicyAnalysis.Mode -eq 'Testing') { 
-            $ValidationWarns.Add('MTA-STS policy is in testing mode, no action will be taken') | Out-Null 
+        if ($StsPolicyAnalysis.Mode -eq 'Testing') {
+            $ValidationWarns.Add('MTA-STS policy is in testing mode, no action will be taken') | Out-Null
             $StsPolicyAnalysis.HasWarnings = $true
         }
 

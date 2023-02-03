@@ -2,19 +2,19 @@ function Read-DkimRecord {
     <#
     .SYNOPSIS
     Read DKIM record from DNS
-    
+
     .DESCRIPTION
     Validates DKIM records on a domain a selector
-    
+
     .PARAMETER Domain
     Domain to check
-    
+
     .PARAMETER Selectors
     Selector records to check
-    
+
     .PARAMETER MxLookup
     Lookup record based on MX
-    
+
     .EXAMPLE
     PS> Read-DkimRecord -Domain example.com -Selector test
 
@@ -67,7 +67,7 @@ function Read-DkimRecord {
 
     # Get unique selectors
     $Selectors = $Selectors | Sort-Object -Unique
-    
+
     if (($Selectors | Measure-Object | Select-Object -ExpandProperty Count) -gt 0) {
         foreach ($Selector in $Selectors) {
             if (![string]::IsNullOrEmpty($Selector)) {
@@ -96,12 +96,12 @@ function Read-DkimRecord {
                     $QueryResults = Resolve-DnsHttpsQuery @DnsQuery -ErrorAction Stop
                 }
 
-                catch { 
+                catch {
                     $Message = "{0}`r`n{1}" -f $_.Exception.Message, ($DnsQuery | ConvertTo-Json)
                     throw $Message
                 }
                 if ([string]::IsNullOrEmpty($Selector)) { continue }
-            
+
                 if ($QueryResults.Status -eq 2 -and $QueryResults.AD -eq $false) {
                     $ValidationFails.Add('DNSSEC validation failed.') | Out-Null
                 }
@@ -146,12 +146,12 @@ function Read-DkimRecord {
                         ) | Out-Null
                     }
                 }
-            
+
                 # Loop through name/value pairs and set object properties
                 $x = 0
-                foreach ($Tag in $TagList) { 
+                foreach ($Tag in $TagList) {
                     if ($x -eq 0 -and $Tag.Value -ne 'DKIM1') { $ValidationFails.Add("$Selector - The record must being with 'v=DKIM1'.") | Out-Null }
-            
+
                     switch ($Tag.Name) {
                         'v' {
                             # REQUIRED: Version
@@ -171,7 +171,7 @@ function Read-DkimRecord {
                                 }
 
                                 else {
-                                    $ValidationFails.Add("$Selector - There is no public key specified for this DKIM record or the key is revoked.") | Out-Null 
+                                    $ValidationFails.Add("$Selector - There is no public key specified for this DKIM record or the key is revoked.") | Out-Null
                                 }
                             }
                         }
@@ -232,7 +232,7 @@ function Read-DkimRecord {
                     if (($ValidationFails | Measure-Object | Select-Object -ExpandProperty Count) -eq 0) {
                         $ValidationPasses.Add("$Selector - No errors detected with DKIM record.") | Out-Null
                     }
-                }    
+                }
             ($DkimAnalysis.Records).Add($DkimRecord) | Out-Null
             }
         }
@@ -244,7 +244,7 @@ function Read-DkimRecord {
     if ($MinimumSelectorPass -gt 0 -and $SelectorPasses -eq 0) {
         $ValidationFails.Add(('{0} DKIM record(s) found. The minimum number of valid records ({1}) was not met.' -f $SelectorPasses, $MinimumSelectorPass)) | Out-Null
     }
-    
+
     elseif ($MinimumSelectorPass -gt 0 -and $SelectorPasses -ge $MinimumSelectorPass) {
         $ValidationPasses.Add(('Minimum number of valid DKIM records were met {0}/{1}.' -f $SelectorPasses, $MinimumSelectorPass))
     }
