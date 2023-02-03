@@ -64,7 +64,7 @@ function Test-DNSSEC {
                 }
                 $DSResults.Keys = $Result.answer.data
             }
-            
+
             else {
                 $ValidationFails.Add('DNSSEC is not set up for this domain.') | Out-Null
             }
