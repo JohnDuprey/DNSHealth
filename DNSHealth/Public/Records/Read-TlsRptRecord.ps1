@@ -114,7 +114,7 @@ function Read-TlsRptRecord {
                 if ($RuaMatched) {
                     $ValidationPasses.Add('Aggregate reports are being sent') | Out-Null
                 }
-                
+
                 else {
                     $ValidationWarns.Add('Aggregate reports are not being sent') | Out-Null
                     $TlsRptAnalysis.HasWarnings = $true

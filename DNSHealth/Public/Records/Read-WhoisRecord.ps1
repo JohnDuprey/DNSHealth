@@ -153,7 +153,7 @@ function Read-WhoisRecord {
     catch {
         Write-Error $_.Exception.Message
     }
-    
+
     finally {
         IF ($Stream) {
             $Stream.Close()

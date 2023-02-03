@@ -495,7 +495,7 @@ function Read-SpfRecord {
         elseif ($LookupCount -ge 9 -and $LookupCount -le 10) {
             $ValidationWarns.Add("Lookup count: $LookupCount/10. Excessive lookups can cause the SPF evaluation to fail (RFC 7208 Section 4.6.4).") | Out-Null
         }
-        
+
         else {
             $ValidationPasses.Add("Lookup count: $LookupCount/10.") | Out-Null
         }
