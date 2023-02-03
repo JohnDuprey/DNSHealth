@@ -73,7 +73,8 @@ namespace CyberDrain.CIPP {
             Add-Type -TypeDefinition $source -Language CSharp
         }
     }
-    catch {}
+
+    catch { Write-Verbose $_.Exception.Message }
 
     [CyberDrain.CIPP.CertificateCheck]::GetServerCertificate($Url, $FollowRedirect)
 }

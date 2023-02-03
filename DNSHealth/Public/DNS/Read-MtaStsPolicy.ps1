@@ -51,7 +51,7 @@ function Read-MtaStsPolicy {
         $wr = Invoke-WebRequest @RequestParams -ErrorAction Stop
         $PolicyExists = $true
     }
-
+    
     catch {
         $ValidationFails.Add(('MTA-STS policy does not exist for {0}' -f $Domain)) | Out-Null
     }
@@ -70,7 +70,7 @@ function Read-MtaStsPolicy {
                     }
                 ) | Out-Null
             }
-
+            
             catch { Write-Verbose $_.Exception.Message }
         }
     }

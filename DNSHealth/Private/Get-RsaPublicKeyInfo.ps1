@@ -157,7 +157,8 @@ namespace SevenTiny.Bantina.Security {
             Add-Type -TypeDefinition $source -Language CSharp
         }
     }
-    catch {}
+
+    catch { Write-Verbose $_.Exception.Message }
 
     # Return RSA Public Key information
     [SevenTiny.Bantina.Security.RSACommon]::CreateRsaProviderFromPublicKey($EncodedString)
