@@ -58,12 +58,12 @@ function Read-MXRecord {
     elseif ($Result.Status -ne 0 -or -not ($Result.Answer)) {
         if ($Result.Status -eq 3) {
             $ValidationFails.Add($NoMxValidation) | Out-Null
-            $MXResults.MailProvider = Get-Content 'MailProviders\Null.json' | ConvertFrom-Json
+            $MXResults.MailProvider = Get-Content "$PSScriptRoot\MailProviders\Null.json" | ConvertFrom-Json
             $MXResults.Selectors = $MXRecords.MailProvider.Selectors
         }
         else {
             $ValidationFails.Add($NoMxValidation) | Out-Null
-            $MXResults.MailProvider = Get-Content 'MailProviders\Null.json' | ConvertFrom-Json
+            $MXResults.MailProvider = Get-Content "$PSScriptRoot\MailProviders\Null.json" | ConvertFrom-Json
             $MXResults.Selectors = $MXRecords.MailProvider.Selectors
         }
         $MXRecords = $null
