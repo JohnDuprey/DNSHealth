@@ -35,6 +35,7 @@ function Resolve-DnsHttpsQuery {
         Set-DnsResolver
     }
     
+    $Resolver = $script:DnsResolver.Resolver
     $BaseUri = $script:DnsResolver.BaseUri
     $QueryTemplate = $script:DnsResolver.QueryTemplate
 
@@ -49,11 +50,25 @@ function Resolve-DnsHttpsQuery {
 
     $Uri = $QueryTemplate -f $BaseUri, $Domain, $RecordType
 
-    $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -ErrorAction Stop
-    
-    if ($Resolver -eq 'Cloudflare' -or $Resolver -eq 'Quad9' -and $RecordType -eq 'txt' -and $Results.Answer) {
-        $Results.Answer | ForEach-Object {
-            $_.data = $_.data -replace '"' -replace '\s+', ' '
+    $x = 0
+    do {
+        $x++
+        try {
+            $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -ErrorAction Stop
+        }
+        
+        catch {
+            Start-Sleep -Milliseconds 300
+        }
+    }
+    while (-not $Results -and $x -le 3)
+    if (!$Results) { throw $_ }
+
+    if ($RecordType -eq 'txt' -and $Results.Answer) {
+        if ($Resolver -eq 'Cloudflare' -or $Resolver -eq 'Quad9') {
+            $Results.Answer | ForEach-Object {
+                $_.data = $_.data -replace '"' -replace '\s+', ' '
+            }
         }
         $Results.Answer = $Results.Answer | Where-Object { $_.type -eq 16 } 
     }

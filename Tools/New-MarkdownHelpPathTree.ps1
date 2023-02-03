@@ -11,6 +11,7 @@ foreach ($Folder in $Folders) {
         if ($item.Extension -eq '.ps1') {
             $NewReadme = $NewReadme + ("`n- [{0}](./Docs/{1}.md)" -f $Item.BaseName, $Item.BaseName)
         }
+        
         else {
             $NewReadme = $NewReadme + ("`n- {0}" -f $Item.BaseName)
             $Item | Get-ChildItem | ForEach-Object {

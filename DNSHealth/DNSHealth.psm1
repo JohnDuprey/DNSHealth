@@ -7,6 +7,7 @@ foreach ($import in @($Public + $Private)) {
     Try {
         . $import.fullName
     }
+    
     Catch {
         Write-Error -Message "Failed to import function $($import.fullName): $_"
     }

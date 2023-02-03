@@ -10,23 +10,25 @@ function Set-DnsResolver {
         $script:DnsResolver = switch ($Resolver) {
             'Google' {
                 [PSCustomObject]@{
+                    Resolver      = $Resolver
                     BaseUri       = 'https://dns.google/resolve'
                     QueryTemplate = '{0}?name={1}&type={2}' 
                 }
             }
             'CloudFlare' {
                 [PSCustomObject]@{
+                    Resolver      = $Resolver
                     BaseUri       = 'https://cloudflare-dns.com/dns-query'
                     QueryTemplate = '{0}?name={1}&type={2}'
                 }
             }
             'Quad9' {
                 [PSCustomObject]@{
-                    BaseUri       = 'https://dns9.quad9.net:5053/dns-query'
+                    Resolver      = $Resolver
+                    BaseUri       = 'https://dns.quad9.net:5053/dns-query'
                     QueryTemplate = '{0}?name={1}&type={2}'
                 }
             }
         }
-
     }
 }

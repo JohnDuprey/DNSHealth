@@ -86,7 +86,6 @@ function Read-DmarcPolicy {
         $DmarcAnalysis.Record = $DmarcRecord
         $RecordCount++  
     }
-
     if ($Query.Status -eq 2 -and $Query.AD -eq $false) {
         $ValidationFails.Add('DNSSEC validation failed.') | Out-Null
     }
