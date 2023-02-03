@@ -2,16 +2,16 @@ function Read-MXRecord {
     <#
     .SYNOPSIS
     Reads MX records for domain
-    
+
     .DESCRIPTION
     Queries DNS servers to get MX records and returns in PSCustomObject list with Preference and Hostname
-    
+
     .PARAMETER Domain
     Domain to query
-    
+
     .EXAMPLE
     PS> Read-MXRecord -Domain gmail.com
-    
+
     Preference Hostname
     ---------- --------
        5 gmail-smtp-in.l.google.com.
@@ -19,7 +19,7 @@ function Read-MXRecord {
       20 alt2.gmail-smtp-in.l.google.com.
       30 alt3.gmail-smtp-in.l.google.com.
       40 alt4.gmail-smtp-in.l.google.com.
-    
+
     #>
     [CmdletBinding()]
     Param(
@@ -43,9 +43,9 @@ function Read-MXRecord {
         RecordType = 'mx'
         Domain     = $Domain
     }
-    
+
     $NoMxValidation = 'There are no mail exchanger records for this domain. If you do not want to receive mail for this domain use a Null MX record of . with a priority 0 (RFC 7505).'
- 
+
     $MXResults.Domain = $Domain
 
     try {
@@ -73,7 +73,7 @@ function Read-MXRecord {
     }
 
     else {
-        $MXRecords = $Result.Answer | ForEach-Object { 
+        $MXRecords = $Result.Answer | ForEach-Object {
             $Priority, $Hostname = $_.Data.Split(' ')
             try {
                 [PSCustomObject]@{
@@ -98,9 +98,9 @@ function Read-MXRecord {
             }
 
             else {
-                $ProviderList = Get-ChildItem "$PSScriptRoot\MailProviders" -Exclude '_template.json' | ForEach-Object { 
-                    try { Get-Content $_ | ConvertFrom-Json -ErrorAction Stop } 
-                    catch { Write-Verbose $_.Exception.Message } 
+                $ProviderList = Get-ChildItem "$PSScriptRoot\MailProviders" -Exclude '_template.json' | ForEach-Object {
+                    try { Get-Content $_ | ConvertFrom-Json -ErrorAction Stop }
+                    catch { Write-Verbose $_.Exception.Message }
                 }
                 foreach ($Record in $MXRecords) {
                     $ProviderMatched = $false
@@ -110,10 +110,10 @@ function Read-MXRecord {
                                 $MXResults.MailProvider = $Provider
                                 if (($Provider.SpfReplace | Measure-Object | Select-Object -ExpandProperty Count) -gt 0) {
                                     $ReplaceList = [System.Collections.Generic.List[string]]::new()
-                                    foreach ($Var in $Provider.SpfReplace) { 
+                                    foreach ($Var in $Provider.SpfReplace) {
                                         if ($ReservedVariables.Keys -contains $Var) {
                                             $ReplaceList.Add($ReservedVariables.$Var) | Out-Null
-                                        } 
+                                        }
 
                                         else {
                                             $ReplaceList.Add($Matches.$Var) | Out-Null

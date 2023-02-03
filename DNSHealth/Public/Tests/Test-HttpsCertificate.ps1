@@ -2,17 +2,17 @@ function Test-HttpsCertificate {
     <#
     .SYNOPSIS
     Test HTTPS certificate for Domain
-    
+
     .DESCRIPTION
     This function aggregates test results for a domain and subdomains in regards to
     HTTPS certificates
-    
+
     .PARAMETER Domain
     Domain to check
-    
+
     .PARAMETER Subdomains
     List of subdomains
-    
+
     .EXAMPLE
     PS> Test-HttpsCertificate -Domain badssl.com -Subdomains expired, revoked
 
@@ -23,7 +23,7 @@ function Test-HttpsCertificate {
         [string]$Domain,
         [string[]]$Subdomains = @()
     )
-    
+
     $CertificateTests = [PSCustomObject]@{
         Domain           = $Domain
         UrlsToTest       = [System.Collections.Generic.List[string]]::new()
@@ -41,7 +41,7 @@ function Test-HttpsCertificate {
             $Urls.Add(('https://{0}.{1}' -f $Subdomain, $Domain)) | Out-Null
         }
     }
-    
+
     $CertificateTests.UrlsToTest = $Urls
 
     $CertificateTests.Tests = foreach ($Url in $Urls) {
@@ -55,7 +55,7 @@ function Test-HttpsCertificate {
             ValidationWarns  = [System.Collections.Generic.List[string]]::new()
             ValidationFails  = [System.Collections.Generic.List[string]]::new()
             Errors           = [System.Collections.Generic.List[string]]::new()
-        }      
+        }
         try {
             # Parse URL and extract hostname
             $ParsedUrl = [System.Uri]::new($Url)
@@ -79,6 +79,7 @@ function Test-HttpsCertificate {
             if ($Certificate.DnsNameList -contains $Hostname -or $Certificate.DnsNameList -eq "*.$Domain") {
                 $ValidationPasses.Add(('{0} - Certificate DNS name list contains hostname.' -f $Hostname)) | Out-Null
             }
+
             else {
                 $ValidationFails.Add(('{0} - Certificate DNS name list does not contain hostname' -f $Hostname)) | Out-Null
             }
@@ -88,14 +89,17 @@ function Test-HttpsCertificate {
                 # NotBefore is in the future
                 $ValidationFails.Add(('{0} - Certificate is not yet valid.' -f $Hostname)) | Out-Null
             }
+
             elseif ($Certificate.NotAfter -le $CurrentDate) {
                 # NotAfter is in the past
                 $ValidationFails.Add(('{0} - Certificate expired {1} day(s) ago.' -f $Hostname, [Math]::Abs($TimeSpan.Days))) | Out-Null
             }
+
             elseif ($Certificate.NotAfter -ge $CurrentDate -and $TimeSpan.Days -lt 30) {
                 # NotAfter is under 30 days away
                 $ValidationWarns.Add(('{0} - Certificate will expire in {1} day(s).' -f $Hostname, $TimeSpan.Days)) | Out-Null
             }
+
             else {
                 # Certificate is valid and not expired
                 $ValidationPasses.Add(('{0} - Certificate is valid for the next {1} days.' -f $Hostname, $TimeSpan.Days)) | Out-Null
@@ -111,7 +115,7 @@ function Test-HttpsCertificate {
             # Website status errorr
             if ([int]$HttpResponse.StatusCode -ge 400) {
                 $ValidationFails.Add(('{0} - Website responded with: {1}' -f $Hostname, $HttpResponse.ReasonPhrase))
-            } 
+            }
 
             # Set values and return Test object
             $Test.Hostname = $Hostname
@@ -127,7 +131,8 @@ function Test-HttpsCertificate {
             # Return test
             $Test
         }
-        catch {}
+
+        catch { Write-Verbose $_.Exception.Message }
     }
 
     # Aggregate validation results
@@ -139,7 +144,7 @@ function Test-HttpsCertificate {
         if ($ValidationFailCount -gt 0) {
             $CertificateTests.ValidationFails.Add(('{0} - Failure on {1} check(s)' -f $Test.Hostname, $ValidationFailCount)) | Out-Null
         }
-        
+
         if ($ValidationWarnCount -gt 0) {
             $CertificateTests.ValidationWarns.Add(('{0} - Warning on {1} check(s)' -f $Test.Hostname, $ValidationWarnCount)) | Out-Null
         }
@@ -148,7 +153,7 @@ function Test-HttpsCertificate {
             $CertificateTests.ValidationPasses.Add(('{0} - Pass on {1} check(s)' -f $Test.Hostname, $ValidationPassCount)) | Out-Null
         }
     }
-    
+
     # Return tests
     $CertificateTests
 }

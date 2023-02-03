@@ -2,13 +2,13 @@ function Read-TlsRptRecord {
     <#
     .SYNOPSIS
     Resolve and validate TLSRPT record
-    
+
     .DESCRIPTION
     Query domain for TLSRPT record (_smtp._tls.domain.com) and parse results. Record is checked for issues.
-    
+
     .PARAMETER Domain
     Domain to process TLSRPT record
-    
+
     .EXAMPLE
     PS> Read-TlsRptRecord -Domain gmail.com
 
@@ -50,7 +50,7 @@ function Read-TlsRptRecord {
         RecordType = 'TXT'
         Domain     = "_smtp._tls.$Domain"
     }
-    
+
     # Resolve DMARC record
 
     $Query = Resolve-DnsHttpsQuery @DnsQuery -ErrorAction Stop
@@ -59,7 +59,7 @@ function Read-TlsRptRecord {
     $Query.Answer | Where-Object { $_.data -match '^v=TLSRPTv1' } | ForEach-Object {
         $TlsRtpRecord = $_.data
         $TlsRptAnalysis.Record = $TlsRtpRecord
-        $RecordCount++  
+        $RecordCount++
     }
     if ($Query.Status -eq 2 -and $Query.AD -eq $false) {
         $ValidationFails.Add('DNSSEC validation failed.') | Out-Null
@@ -68,10 +68,12 @@ function Read-TlsRptRecord {
         if ($Query.Status -eq 3) {
             $ValidationFails.Add('Record does not exist (NXDOMAIN)') | Out-Null
         }
+
         else {
             $ValidationFails.Add("$Domain does not have an TLSRPT record") | Out-Null
         }
     }
+
     elseif ($RecordCount -gt 1) {
         $ValidationFails.Add("$Domain has multiple TLSRPT records") | Out-Null
     }
@@ -112,6 +114,7 @@ function Read-TlsRptRecord {
                 if ($RuaMatched) {
                     $ValidationPasses.Add('Aggregate reports are being sent') | Out-Null
                 }
+                
                 else {
                     $ValidationWarns.Add('Aggregate reports are not being sent') | Out-Null
                     $TlsRptAnalysis.HasWarnings = $true
@@ -123,12 +126,12 @@ function Read-TlsRptRecord {
 
     if ($RecordCount -gt 0) {
         # Check for missing record tags and set defaults
-            
+
         if ($RecordCount -gt 1) {
             $ValidationWarns.Add('Multiple TLSRPT records detected, this may cause unexpected behavior.') | Out-Null
             $TlsRptAnalysis.HasWarnings = $true
         }
-        
+
         $ValidationWarnCount = ($Test.ValidationWarns | Measure-Object).Count
         $ValidationFailCount = ($Test.ValidationFails | Measure-Object).Count
         if ($ValidationFailCount -eq 0 -and $ValidationWarnCount -eq 0) {

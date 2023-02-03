@@ -2,13 +2,13 @@ function Read-MtaStsRecord {
     <#
     .SYNOPSIS
     Resolve and validate MTA-STS record
-    
+
     .DESCRIPTION
     Query domain for DMARC policy (_mta-sts.domain.com) and parse results. Record is checked for issues.
-    
+
     .PARAMETER Domain
     Domain to process MTA-STS record
-    
+
     .EXAMPLE
     PS> Read-MtaStsRecord -Domain gmail.com
 
@@ -45,7 +45,7 @@ function Read-MtaStsRecord {
         RecordType = 'TXT'
         Domain     = "_mta-sts.$Domain"
     }
-    
+
     # Resolve DMARC record
 
     $Query = Resolve-DnsHttpsQuery @DnsQuery -ErrorAction Stop
@@ -54,19 +54,22 @@ function Read-MtaStsRecord {
     $Query.Answer | Where-Object { $_.data -match '^v=STSv1' } | ForEach-Object {
         $StsRecord = $_.data
         $StsAnalysis.Record = $StsRecord
-        $RecordCount++  
+        $RecordCount++
     }
     if ($Query.Status -eq 2 -and $Query.AD -eq $false) {
         $ValidationFails.Add('DNSSEC validation failed.') | Out-Null
     }
+
     elseif ($Query.Status -ne 0 -or $RecordCount -eq 0) {
         if ($Query.Status -eq 3) {
             $ValidationFails.Add('Record does not exist (NXDOMAIN)') | Out-Null
         }
+
         else {
             $ValidationFails.Add("$Domain does not have an MTA-STS record") | Out-Null
         }
     }
+
     elseif ($RecordCount -gt 1) {
         $ValidationFails.Add("$Domain has multiple MTA-STS records") | Out-Null
     }
@@ -106,14 +109,14 @@ function Read-MtaStsRecord {
         # Check for missing record tags and set defaults
         if ($StsAnalysis.Id -eq '') { $ValidationFails.Add('Id record is missing') | Out-Null }
         elseif ($StsAnalysis.Id -notmatch '^[A-Za-z0-9]+$') {
-            $ValidationFails.Add('STS Record ID must be alphanumeric') | Out-Null 
+            $ValidationFails.Add('STS Record ID must be alphanumeric') | Out-Null
         }
-            
+
         if ($RecordCount -gt 1) {
             $ValidationWarns.Add('Multiple MTA-STS records detected, this may cause unexpected behavior.') | Out-Null
             $StsAnalysis.HasWarnings = $true
         }
-        
+
         $ValidationWarnCount = ($Test.ValidationWarns | Measure-Object).Count
         $ValidationFailCount = ($Test.ValidationFails | Measure-Object).Count
         if ($ValidationFailCount -eq 0 -and $ValidationWarnCount -eq 0) {

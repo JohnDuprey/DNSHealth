@@ -2,13 +2,13 @@ function Test-MtaSts {
     <#
     .SYNOPSIS
     Perform MTA-STS and TLSRPT checks
-    
+
     .DESCRIPTION
     Retrieve MTA-STS record, policy and TLSRPT record
-    
+
     .PARAMETER Domain
     Domain to process
-    
+
     .EXAMPLE
     PS> Test-MtaSts -Domain gmail.com
 

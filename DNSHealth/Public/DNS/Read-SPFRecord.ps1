@@ -2,14 +2,14 @@ function Read-SpfRecord {
     <#
     .SYNOPSIS
     Reads SPF record for specified domain
-    
+
     .DESCRIPTION
     Uses Get-GoogleDNSQuery to obtain TXT records for domain, searching for v=spf1 at the beginning of the record
     Also parses include records and obtains their SPF as well
-    
+
     .PARAMETER Domain
     Domain to obtain SPF record for
-    
+
     .EXAMPLE
     PS> Read-SpfRecord -Domain gmail.com
 
@@ -55,7 +55,7 @@ function Read-SpfRecord {
         ValidationPasses  = [System.Collections.Generic.List[string]]::new()
         ValidationWarns   = [System.Collections.Generic.List[string]]::new()
         ValidationFails   = [System.Collections.Generic.List[string]]::new()
-        RecordList        = [System.Collections.Generic.List[object]]::new()   
+        RecordList        = [System.Collections.Generic.List[object]]::new()
         TypeLookups       = [System.Collections.Generic.List[object]]::new()
         Recommendations   = [System.Collections.Generic.List[object]]::new()
         RecommendedRecord = ''
@@ -66,7 +66,7 @@ function Read-SpfRecord {
 
     }
 
-  
+
 
     # Initialize lists to hold all records
     $RecordList = [System.Collections.Generic.List[object]]::new()
@@ -81,7 +81,7 @@ function Read-SpfRecord {
 
     $TypeLookups = [System.Collections.Generic.List[object]]::new()
     $IPAddresses = [System.Collections.Generic.List[string]]::new()
-       
+
     $DnsQuery = @{
         RecordType = 'TXT'
         Domain     = $Domain
@@ -117,20 +117,20 @@ function Read-SpfRecord {
                     }
 
                     else {
-                        
+
                         $Answer = ($Query.answer | Where-Object { $_.data -match '^v=spf1' })
                         $RecordCount = ($Answer.data | Measure-Object).count
                         $Record = $Answer.data
-                        if ($RecordCount -eq 0) { 
+                        if ($RecordCount -eq 0) {
                             $ValidationFails.Add($NoSpfValidation) | Out-Null
                             $Status = 'permerror'
                         }
                         # Check for the correct number of records
                         elseif ($RecordCount -gt 1 -and $Level -eq 'Parent') {
-                            $ValidationFails.Add("There must only be one SPF record per domain, we found $RecordCount.") | Out-Null 
+                            $ValidationFails.Add("There must only be one SPF record per domain, we found $RecordCount.") | Out-Null
                             $Recommendations.Add([pscustomobject]@{
                                     Message = 'Delete one of the records beginning with v=spf1'
-                                    Match   = '' 
+                                    Match   = ''
                                 }) | Out-Null
                             $Status = 'permerror'
                             $Record = $Answer.data[0]
@@ -170,7 +170,7 @@ function Read-SpfRecord {
                                 Replace = ''
                             }) | Out-Null
                     }
-                    
+
                 }
 
                 foreach ($Term in $RecordTerms) {
@@ -209,14 +209,14 @@ function Read-SpfRecord {
                         # Record has been redirected, stop evaluating terms
                         break
                     }
-            
+
                     # Include mechanism
                     elseif ($Term -match '^(?<Qualifier>[+-~?])?include:(?<Value>.+)$') {
                         $LookupCount++
                         Write-Verbose '-----INCLUDE-----'
                         Write-Verbose "Looking up include $($Matches.Value)"
                         $IncludeLookup = Read-SpfRecord -Domain $Matches.Value -Level 'Include'
-                        
+
                         if ([string]::IsNullOrEmpty($IncludeLookup.Record) -and $Level -eq 'Parent') {
                             Write-Verbose '-----END INCLUDE (SPF MISSING)-----'
                             $ValidationFails.Add("Include lookup for $($Matches.Value) does not contain a SPF record, this will result in a failure.") | Out-Null
@@ -248,15 +248,15 @@ function Read-SpfRecord {
                     # Remaining type mechanisms a,mx,ptr
                     elseif ($Term -match '^(?<Qualifier>[+-~?])?(?<RecordType>(?:a|mx|ptr))(?:[:](?<TypeDomain>.+))?$') {
                         $LookupCount++
-                    
+
                         if ($Matches.TypeDomain) {
                             $TypeDomain = $Matches.TypeDomain
                         }
 
                         else {
                             $TypeDomain = $Domain
-                        }      
-                    
+                        }
+
                         if ($TypeDomain -ne 'Not Specified') {
                             try {
                                 $TypeQuery = @{ Domain = $TypeDomain; RecordType = $Matches.RecordType }
@@ -267,16 +267,16 @@ function Read-SpfRecord {
                                     if ($TypeResult.Answer) {
                                         foreach ($mx in $TypeResult.Answer.data) {
                                             $MxCount++
-                                            $Preference, $MxDomain = $mx -replace '\.$' -split '\s+'     
-                                            try {                           
-                                                Write-Verbose "MX: Lookup $MxDomain"        
+                                            $Preference, $MxDomain = $mx -replace '\.$' -split '\s+'
+                                            try {
+                                                Write-Verbose "MX: Lookup $MxDomain"
                                                 $MxQuery = Resolve-DnsHttpsQuery -Domain $MxDomain -ErrorAction Stop
                                                 $MxIps = $MxQuery.Answer.data
-                                        
+
                                                 foreach ($MxIp in $MxIps) {
                                                     $IPAddresses.Add($MxIp) | Out-Null
                                                 }
-                                        
+
                                                 if ($MxCount -gt 10) {
                                                     $ValidationWarns.Add("$Domain - Mechanism 'mx' lookup for $MxDomain has exceeded the 10 A or AAAA record lookup limit (RFC 7208, Section 4.6.4).") | Out-Null
                                                     $TypeResult = $null
@@ -284,8 +284,8 @@ function Read-SpfRecord {
                                                 }
                                             }
 
-                                            catch { 
-                                                Write-Verbose $_.Exception.Message 
+                                            catch {
+                                                Write-Verbose $_.Exception.Message
                                                 $TypeResult = $null
                                             }
                                         }
@@ -302,13 +302,13 @@ function Read-SpfRecord {
                             }
 
                             catch {
-                                $TypeResult = $null 
+                                $TypeResult = $null
                             }
 
                             if ($null -eq $TypeResult -or $TypeResult.Status -ne 0) {
                                 $Message = "$Domain - Type lookup for the mechanism '$($TypeQuery.RecordType)' did not return any results."
                                 switch ($Level) {
-                                    'Parent' { 
+                                    'Parent' {
                                         $ValidationFails.Add("$Message") | Out-Null
                                         $Status = 'permerror'
                                     }
@@ -320,13 +320,13 @@ function Read-SpfRecord {
                             else {
                                 if ($TypeResult.Answer) {
                                     if ($TypeQuery.RecordType -match 'mx') {
-                                    
-                                        $Result = $TypeResult.Answer | ForEach-Object { 
+
+                                        $Result = $TypeResult.Answer | ForEach-Object {
                                             #$LookupCount++
-                                            $_.Data.Split(' ')[1] 
+                                            $_.Data.Split(' ')[1]
                                         }
                                     }
-                                
+
                                     else {
                                         $Result = $TypeResult.answer.data
                                     }
@@ -334,7 +334,7 @@ function Read-SpfRecord {
                             }
                             $TypeLookups.Add(
                                 [PSCustomObject]@{
-                                    Domain     = $TypeQuery.Domain 
+                                    Domain     = $TypeQuery.Domain
                                     RecordType = $TypeQuery.RecordType
                                     Result     = $Result
                                 }
@@ -353,11 +353,11 @@ function Read-SpfRecord {
                 }
 
                 # Explanation modifier
-                if ($Record -match 'exp=(?<MacroExpand>.+)$') { 
+                if ($Record -match 'exp=(?<MacroExpand>.+)$') {
                     Write-Verbose '-----EXPLAIN-----'
                     $ExpQuery = @{ Domain = $Domain; MacroExpand = $Matches.MacroExpand; RecordType = 'TXT' }
                     $ExpResult = Resolve-DnsHttpsQuery @ExpQuery -ErrorAction Stop
-                    if ($ExpResult.Status -eq 0 -and $ExpResult.Answer.Type -eq 16) { 
+                    if ($ExpResult.Status -eq 0 -and $ExpResult.Answer.Type -eq 16) {
                         $Explain = @{
                             Record  = $ExpResult.Answer.data
                             Example = Get-DomainMacros -Domain $Domain -MacroExpand $ExpResult.Answer.data
@@ -375,7 +375,7 @@ function Read-SpfRecord {
     catch {
         Write-Verbose "EXCEPTION: $($_.InvocationInfo.ScriptLineNumber) $($_.Exception.Message)"
     }
-    
+
     # Lookup MX record for expected include information if not supplied
     if ($Level -eq 'Parent' -and $ExpectedInclude -eq '') {
         try {
@@ -407,7 +407,7 @@ function Read-SpfRecord {
 
         catch { Write-Verbose $_.Exception.Message }
     }
-        
+
     # Look for expected include record and report pass or fail
     if ($ExpectedInclude -ne '') {
         if ($RecordList.Domain -notcontains $ExpectedInclude) {
@@ -445,9 +445,9 @@ function Read-SpfRecord {
     }
     if ($Level -eq 'Parent' -and $RecordCount -gt 0) {
         # Check for the correct all mechanism
-        if ($AllMechanism -eq '' -and $Record -ne '') { 
+        if ($AllMechanism -eq '' -and $Record -ne '') {
             $ValidationFails.Add("The 'all' mechanism is missing from SPF record, the default is a neutral qualifier (?all).") | Out-Null
-            $AllMechanism = '?all' 
+            $AllMechanism = '?all'
         }
 
         if ($AllMechanism -eq '-all') {
@@ -455,7 +455,7 @@ function Read-SpfRecord {
         }
 
         elseif ($Record -ne '') {
-            $ValidationFails.Add('The SPF record should end in -all to prevent spamming.') | Out-Null 
+            $ValidationFails.Add('The SPF record should end in -all to prevent spamming.') | Out-Null
             $Recommendations.Add([PSCustomObject]@{
                     Message = "Replace '{0}' with '-all' to make a SPF failure result in a hard fail." -f $AllMechanism
                     Match   = [regex]::escape($AllMechanism)
@@ -476,7 +476,7 @@ function Read-SpfRecord {
                             Match   = $Match
                             Replace = ''
                         }) | Out-Null
-                } 
+                }
             }
             if (!($SpecificLookupsFound)) {
                 $Recommendations.Add([PSCustomObject]@{
@@ -486,15 +486,15 @@ function Read-SpfRecord {
             }
         }
 
-        if ($LookupCount -gt 10) { 
-            $ValidationFails.Add("Lookup count: $LookupCount/10. The SPF evaluation will fail with a permanent error (RFC 7208 Section 4.6.4).") | Out-Null 
+        if ($LookupCount -gt 10) {
+            $ValidationFails.Add("Lookup count: $LookupCount/10. The SPF evaluation will fail with a permanent error (RFC 7208 Section 4.6.4).") | Out-Null
             $Status = 'permerror'
         }
 
         elseif ($LookupCount -ge 9 -and $LookupCount -le 10) {
-            $ValidationWarns.Add("Lookup count: $LookupCount/10. Excessive lookups can cause the SPF evaluation to fail (RFC 7208 Section 4.6.4).") | Out-Null            
+            $ValidationWarns.Add("Lookup count: $LookupCount/10. Excessive lookups can cause the SPF evaluation to fail (RFC 7208 Section 4.6.4).") | Out-Null
         }
-        
+
         else {
             $ValidationPasses.Add("Lookup count: $LookupCount/10.") | Out-Null
         }
@@ -537,11 +537,11 @@ function Read-SpfRecord {
     $SpfResults.TypeLookups = @($TypeLookups)
     $SpfResults.IPAddresses = @($IPAddresses)
     $SpfResults.Explanation = $Explain
-    $SpfResults.Status = $Status    
+    $SpfResults.Status = $Status
 
-    
+
     Write-Verbose "-----END SPF RECORD ($Level)-----"
-    
+
     # Output SpfResults object
     $SpfResults
 }

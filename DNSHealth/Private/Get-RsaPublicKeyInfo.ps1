@@ -2,20 +2,20 @@ function Get-RsaPublicKeyInfo {
     <#
     .SYNOPSIS
     Gets RSA public key info from Base64 string
-    
+
     .DESCRIPTION
     Decodes RSA public key information for validation. Uses a c# library to decode base64 data.
-    
+
     .PARAMETER EncodedString
     Base64 encoded public key string
-    
+
     .EXAMPLE
     PS> Get-RsaPublicKeyInfo -EncodedString <base64 string>
-    
+
     LegalKeySizes                           KeyExchangeAlgorithm SignatureAlgorithm KeySize
     -------------                           -------------------- ------------------ -------
     {System.Security.Cryptography.KeySizes} RSA                  RSA                   2048
-    
+
     .NOTES
     Obtained C# code from https://github.com/sevenTiny/Bamboo/blob/b5503b5597383ca6085ceb4aa5fa054918a4bd73/10-Code/SevenTiny.Bantina/Security/RSACommon.cs
     #>
@@ -25,17 +25,17 @@ function Get-RsaPublicKeyInfo {
     )
     $source = @'
 /*********************************************************
- * CopyRight: 7TINY CODE BUILDER. 
+ * CopyRight: 7TINY CODE BUILDER.
  * Version: 5.0.0
  * Author: 7tiny
  * Address: Earth
  * Create: 2018-04-08 21:54:19
  * Modify: 2018-04-08 21:54:19
- * E-mail: dong@7tiny.com | sevenTiny@foxmail.com 
- * GitHub: https://github.com/sevenTiny 
- * Personal web site: http://www.7tiny.com 
- * Technical WebSit: http://www.cnblogs.com/7tiny/ 
- * Description: 
+ * E-mail: dong@7tiny.com | sevenTiny@foxmail.com
+ * GitHub: https://github.com/sevenTiny
+ * Personal web site: http://www.7tiny.com
+ * Technical WebSit: http://www.cnblogs.com/7tiny/
+ * Description:
  * Thx , Best Regards ~
  *********************************************************/
 using System;

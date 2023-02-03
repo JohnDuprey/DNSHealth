@@ -2,16 +2,16 @@ function Read-NSRecord {
     <#
     .SYNOPSIS
     Reads NS records for domain
-    
+
     .DESCRIPTION
     Queries DNS servers to get NS records and returns in PSCustomObject list
-    
+
     .PARAMETER Domain
     Domain to query
-    
+
     .EXAMPLE
     PS> Read-NSRecord -Domain gmail.com
-    
+
     #>
     [CmdletBinding()]
     Param(
@@ -33,7 +33,7 @@ function Read-NSRecord {
         RecordType = 'ns'
         Domain     = $Domain
     }
- 
+
     $NSResults.Domain = $Domain
 
     try {
@@ -49,7 +49,7 @@ function Read-NSRecord {
         $ValidationFails.Add('No nameservers found for this domain.') | Out-Null
         $NSRecords = $null
     }
-    
+
     else {
         $NSRecords = $Result.Answer.data
         $ValidationPasses.Add('Nameserver record is present.') | Out-Null

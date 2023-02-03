@@ -2,16 +2,16 @@ function Test-DNSSEC {
     <#
     .SYNOPSIS
     Test Domain for DNSSEC validation
-    
+
     .DESCRIPTION
     Requests dnskey record from DNS and checks response validation (AD=True)
-    
+
     .PARAMETER Domain
     Domain to check
-    
+
     .EXAMPLE
     PS> Test-DNSSEC -Domain example.com
-    
+
     Domain           : example.com
     ValidationPasses : {example.com - DNSSEC enabled and validated}
     ValidationFails  : {}
@@ -42,24 +42,29 @@ function Test-DNSSEC {
     if ($Result.Status -eq 2 -and $Result.AD -eq $false) {
         $ValidationFails.Add('DNSSEC Validation failed.') | Out-Null
     }
+
     else {
         $RecordCount = ($Result.Answer.data | Measure-Object).Count
         if ($null -eq $Result) {
             $ValidationFails.Add('DNSSEC is not set up for this domain.') | Out-Null
         }
+
         else {
             if ($Result.Status -eq 3) {
                 $ValidationFails.Add('DNSSEC is not set up for this domain.') | Out-Null
             }
+
             elseif ($RecordCount -gt 0) {
                 if ($Result.AD -eq $false) {
                     $ValidationFails.Add('DNSSEC is enabled, but the DNS query response was not validated. Ensure DNSSEC has been enabled on your domain provider.') | Out-Null
                 }
+
                 else {
                     $ValidationPasses.Add('DNSSEC is enabled and validated for this domain.') | Out-Null
                 }
                 $DSResults.Keys = $Result.answer.data
             }
+            
             else {
                 $ValidationFails.Add('DNSSEC is not set up for this domain.') | Out-Null
             }
