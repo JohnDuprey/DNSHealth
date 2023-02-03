@@ -244,7 +244,7 @@ function Read-DkimRecord {
     if ($MinimumSelectorPass -gt 0 -and $SelectorPasses -eq 0) {
         $ValidationFails.Add(('{0} DKIM record(s) found. The minimum number of valid records ({1}) was not met.' -f $SelectorPasses, $MinimumSelectorPass)) | Out-Null
     }
-    
+
     elseif ($MinimumSelectorPass -gt 0 -and $SelectorPasses -ge $MinimumSelectorPass) {
         $ValidationPasses.Add(('Minimum number of valid DKIM records were met {0}/{1}.' -f $SelectorPasses, $MinimumSelectorPass))
     }

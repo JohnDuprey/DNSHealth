@@ -50,7 +50,7 @@ function Read-NSRecord {
         $ValidationFails.Add('No nameservers found for this domain.') | Out-Null
         $NSRecords = $null
     }
-    
+
     else {
         $NSRecords = $Result.Answer.data
         $ValidationPasses.Add('Nameserver record is present.') | Out-Null
