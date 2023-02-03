@@ -31,7 +31,7 @@ Install-Module DNSHealth
 - [Read-MtaStsRecord](./Docs/Read-MtaStsRecord.md)
 - [Read-MXRecord](./Docs/Read-MXRecord.md)
 - [Read-NSRecord](./Docs/Read-NSRecord.md)
-- [Read-SPFRecord](./Docs/Read-SPFRecord.md)
+- [Read-SpfRecord](./Docs/Read-SpfRecord.md)
 - [Read-TlsRptRecord](./Docs/Read-TlsRptRecord.md)
 - [Read-WhoisRecord](./Docs/Read-WhoisRecord.md)
 ## Resolver
