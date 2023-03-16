@@ -1,5 +1,9 @@
+Param(
+    $Count = 1000
+)
+
 $DomainList = (Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/opendns/public-domain-lists/master/opendns-top-domains.txt') -split "`n"
-$RandomDomains = $DomainList | Where-Object { $_ } | Get-Random -Count 1000
+$RandomDomains = $DomainList | Where-Object { $_ } | Get-Random -Count $Count
 
 
 $Jobs = $RandomDomains | ForEach-Object -Parallel {
@@ -9,7 +13,7 @@ $Jobs = $RandomDomains | ForEach-Object -Parallel {
         $Start = Get-Date
         try {
             Set-DnsResolver -Resolver $Resolver
-            $Result = Resolve-DnsHttpsQuery -Domain $_ 
+            $Result = Resolve-DnsHttpsQuery -Domain $_
             $Success = $true
         }
 
