@@ -122,17 +122,18 @@ function Read-WhoisRecord {
         if ($HasReferral) {
             if ($Server -ne $ReferralServer) {
                 $LastResult = $Results
-                $Results = Read-WhoisRecord -Query $Query -Server $ReferralServer -Port $Port
-                if ($Results._Raw -Match '(No match|Not Found|No Data|The queried object does not exist)' -and $TopLevelReferrers -notcontains $Server) {
+                try {
+                    $Results = Read-WhoisRecord -Query $Query -Server $ReferralServer -Port $Port
+                    if ($Results._Raw -Match '(No match|Not Found|No Data|The queried object does not exist)' -and $TopLevelReferrers -notcontains $Server) {
+                        $Results = $LastResult
+                    } else {
+                        foreach ($s in $Results._ReferralServers) {
+                            $ReferralServers.Add($s) | Out-Null
+                        }
+                    }
+                } catch {
                     $Results = $LastResult
                 }
-
-                else {
-                    foreach ($s in $Results._ReferralServers) {
-                        $ReferralServers.Add($s) | Out-Null
-                    }
-                }
-
             }
         }
 
