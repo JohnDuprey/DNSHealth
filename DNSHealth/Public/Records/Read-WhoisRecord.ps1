@@ -49,6 +49,7 @@ function Read-WhoisRecord {
     # Whois parser, generic Property: Value format with some multi-line support and comment handlers
     $WhoisRegex = '^(?!(?:%|>>>|-+|#|[*]))[^\S\n]*(?<PropName>.+?):(?:[\r\n]+)?(:?(?!([0-9]|[/]{2}))[^\S\r\n]*(?<PropValue>.+))?$'
 
+    Write-Verbose "Querying WHOIS Server: $Server"
     # TCP Client for Whois
     $Client = New-Object System.Net.Sockets.TcpClient($Server, 43)
     try {
@@ -124,7 +125,7 @@ function Read-WhoisRecord {
                 $LastResult = $Results
                 try {
                     $Results = Read-WhoisRecord -Query $Query -Server $ReferralServer -Port $Port
-                    if ($Results._Raw -Match '(No match|Not Found|No Data|The queried object does not exist)' -and $TopLevelReferrers -notcontains $Server) {
+                    if ([string]::IsNullOrEmpty($Results._Raw) -or ($Results._Raw -Match '(No match|Not Found|No Data|The queried object does not exist)' -and $TopLevelReferrers -notcontains $Server)) {
                         $Results = $LastResult
                     } else {
                         foreach ($s in $Results._ReferralServers) {
