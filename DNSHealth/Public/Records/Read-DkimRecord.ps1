@@ -25,7 +25,10 @@ function Read-DkimRecord {
         [string]$Domain,
 
         [Parameter()]
-        [System.Collections.Generic.List[string]]$Selectors = @()
+        [System.Collections.Generic.List[string]]$Selectors = @(),
+
+        [Parameter()]
+        [bool]$FallbackToMicrosoftSelectors
     )
 
     $MXRecord = $null
@@ -67,6 +70,11 @@ function Read-DkimRecord {
 
     # Get unique selectors
     $Selectors = $Selectors | Sort-Object -Unique
+    # Fallback to Microsoft DKIM selectors
+    if ( $FallbackToMicrosoftSelectors -eq $true -and [string]::IsNullOrEmpty($Selectors)) { 
+        $Selectors.Add('selector1') 
+        $Selectors.Add('selector2')
+    }
 
     if (($Selectors | Measure-Object | Select-Object -ExpandProperty Count) -gt 0) {
         foreach ($Selector in $Selectors) {
