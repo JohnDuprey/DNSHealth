@@ -25,7 +25,10 @@ function Read-DkimRecord {
         [string]$Domain,
 
         [Parameter()]
-        [System.Collections.Generic.List[string]]$Selectors = @()
+        [System.Collections.Generic.List[string]]$Selectors = @(),
+
+        [Parameter()]
+        [switch]$FallbackToMicrosoftSelectors
     )
 
     $MXRecord = $null
@@ -49,21 +52,28 @@ function Read-DkimRecord {
     # MX lookup, check for defined selectors
     try {
         $MXRecord = Read-MXRecord -Domain $Domain
-        foreach ($Selector in $MXRecord.Selectors) {
-            try {
-                $Selectors.Add($Selector) | Out-Null
+        if ($MXRecord.Selectors) {
+            foreach ($Selector in $MXRecord.Selectors) {
+                try {
+                    $Selectors.Add($Selector) | Out-Null
+                } catch { Write-Verbose $_.Exception.Message }
             }
+        }
+        if ($MXRecord.MailProvider) {
+            $DkimAnalysis.MailProvider = $MXRecord.MailProvider
+            if ($MXRecord.MailProvider.PSObject.Properties.Name -contains 'MinimumSelectorPass') {
+                $MinimumSelectorPass = $MXRecord.MailProvider.MinimumSelectorPass
+            }
+            $DkimAnalysis.Selectors = $Selectors
+        }
+    } catch { Write-Verbose $_.Exception.Message }
 
-            catch { Write-Verbose $_.Exception.Message }
-        }
-        $DkimAnalysis.MailProvider = $MXRecord.MailProvider
-        if ($MXRecord.MailProvider.PSObject.Properties.Name -contains 'MinimumSelectorPass') {
-            $MinimumSelectorPass = $MXRecord.MailProvider.MinimumSelectorPass
-        }
-        $DkimAnalysis.Selectors = $Selectors
+    # Fallback to Microsoft DKIM selectors
+    if ($FallbackToMicrosoftSelectors.IsPresent -and ($Selectors | Measure-Object | Select-Object -ExpandProperty Count) -eq 0) {
+        $MinimumSelectorPass = 1
+        $Selectors.Add('selector1')
+        $Selectors.Add('selector2')
     }
-
-    catch { Write-Verbose $_.Exception.Message }
 
     # Get unique selectors
     $Selectors = $Selectors | Sort-Object -Unique
