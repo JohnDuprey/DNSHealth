@@ -51,18 +51,18 @@ function Resolve-DnsHttpsQuery {
     $Uri = $QueryTemplate -f $BaseUri, $Domain, $RecordType
 
     $x = 0
+    $Exception = $null
     do {
         $x++
         try {
             $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -ErrorAction Stop
-        }
-
-        catch {
+        } catch {
+            $Exception = $_
             Start-Sleep -Milliseconds 300
         }
     }
     while (-not $Results -and $x -le 3)
-    if (!$Results) { throw $_ }
+    if (!$Results) { throw 'Exception querying resolver {0}: {1}' -f $Resolver.Resolver, $Exception.Exception.Message }
 
     if ($RecordType -eq 'txt' -and $Results.Answer) {
         if ($Resolver -eq 'Cloudflare' -or $Resolver -eq 'Quad9') {
