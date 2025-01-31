@@ -50,9 +50,11 @@ function Read-WhoisRecord {
     $WhoisRegex = '^(?!(?:%|>>>|-+|#|[*]))[^\S\n]*(?<PropName>.+?):(?:[\r\n]+)?(:?(?!([0-9]|[/]{2}))[^\S\r\n]*(?<PropValue>.+))?$'
 
     Write-Verbose "Querying WHOIS Server: $Server"
-    # TCP Client for Whois
-    $Client = New-Object System.Net.Sockets.TcpClient($Server, 43)
+
     try {
+        # TCP Client for Whois
+        $Client = New-Object System.Net.Sockets.TcpClient($Server, 43)
+
         # Open TCP connection and send query
         $Stream = $Client.GetStream()
         $ReferralServers = [System.Collections.Generic.List[string]]::new()
@@ -136,16 +138,18 @@ function Read-WhoisRecord {
                     $Results = $LastResult
                 }
             }
-        }
-
-        else {
+        } else {
             if ($Results._Raw -Match '(No match|Not Found|No Data)') {
                 $first, $newquery = ($Query -split '\.')
                 if (($newquery | Measure-Object).Count -gt 1) {
                     $Query = $newquery -join '.'
-                    $Results = Read-WhoisRecord -Query $Query -Server $Server -Port $Port
-                    foreach ($s in $Results._ReferralServers) {
-                        $ReferralServers.Add($s) | Out-Null
+                    try {
+                        $Results = Read-WhoisRecord -Query $Query -Server $Server -Port $Port
+                        foreach ($s in $Results._ReferralServers) {
+                            $ReferralServers.Add($s) | Out-Null
+                        }
+                    } catch {
+                        $Results = $LastResult
                     }
                 }
             }
@@ -162,10 +166,10 @@ function Read-WhoisRecord {
             $Stream.Dispose()
         }
     }
-
-    # Collect referral server list
-    $Results._ReferralServers = $ReferralServers
-
+    if ($ReferralServers) {
+        # Collect referral server list
+        $Results._ReferralServers = $ReferralServers
+    }
     # Convert to json and back to preserve object order
     $WhoisResults = $Results | ConvertTo-Json | ConvertFrom-Json
 
