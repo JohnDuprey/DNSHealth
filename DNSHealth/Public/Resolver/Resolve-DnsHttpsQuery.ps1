@@ -67,7 +67,7 @@ function Resolve-DnsHttpsQuery {
     if ($RecordType -eq 'txt' -and $Results.Answer) {
         if ($Resolver -eq 'Cloudflare' -or $Resolver -eq 'Quad9') {
             $Results.Answer | ForEach-Object {
-                $_.data = $_.data -replace '" "'
+                $_.data = $_.data -replace '" "' -replace '"', ''
             }
         }
         $Results.Answer = $Results.Answer | Where-Object { $_.type -eq 16 }
