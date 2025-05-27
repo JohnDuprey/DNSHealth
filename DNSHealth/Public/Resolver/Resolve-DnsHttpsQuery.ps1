@@ -21,7 +21,7 @@ function Resolve-DnsHttpsQuery {
 
     #>
     [cmdletbinding()]
-    Param(
+    param(
         [Parameter(Mandatory = $true)]
         [string]$Domain,
 
@@ -67,7 +67,7 @@ function Resolve-DnsHttpsQuery {
     if ($RecordType -eq 'txt' -and $Results.Answer) {
         if ($Resolver -eq 'Cloudflare' -or $Resolver -eq 'Quad9') {
             $Results.Answer | ForEach-Object {
-                $_.data = $_.data -replace '"' -replace '\s+', ' '
+                $_.data = $_.data -replace '" "'
             }
         }
         $Results.Answer = $Results.Answer | Where-Object { $_.type -eq 16 }
