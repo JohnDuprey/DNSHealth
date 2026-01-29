@@ -18,4 +18,7 @@ foreach ($import in @($Public + $Private)) {
 # Set variables visible to the module and its functions only
 Add-Type -AssemblyName System.Web
 
+# Set module-level variable for MailProviders path
+Set-Variable -Name 'MailProvidersPath' -Value "$PSScriptRoot\MailProviders" -Scope Script
+
 Export-ModuleMember -Function $Public.Basename -Alias *
