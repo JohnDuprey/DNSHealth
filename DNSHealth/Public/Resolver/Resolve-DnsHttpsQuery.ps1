@@ -65,7 +65,7 @@ function Resolve-DnsHttpsQuery {
     if (!$Results) { throw 'Exception querying resolver {0}: {1}' -f $Resolver.Resolver, $Exception.Exception.Message }
 
     if ($RecordType -eq 'txt' -and $Results.Answer) {
-        if ($Resolver -eq 'Cloudflare' -or $Resolver -eq 'Quad9') {
+        if ($Resolver -eq 'Cloudflare') {
             $Results.Answer | ForEach-Object {
                 $_.data = $_.data -replace '" "' -replace '"', ''
             }

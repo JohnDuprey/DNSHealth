@@ -1,4 +1,4 @@
-Param(
+param(
     $Count = 1000
 )
 
@@ -8,7 +8,7 @@ $RandomDomains = $DomainList | Where-Object { $_ } | Get-Random -Count $Count
 
 $Jobs = $RandomDomains | ForEach-Object -Parallel {
     Import-Module '..\Output\DNSHealth\DNSHealth.psd1'
-    $Resolvers = @('Google', 'Cloudflare', 'Quad9')
+    $Resolvers = @('Google', 'Cloudflare')
     foreach ($Resolver in $Resolvers) {
         $Start = Get-Date
         try {
