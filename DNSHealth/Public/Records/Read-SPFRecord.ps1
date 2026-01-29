@@ -30,7 +30,7 @@ function Read-SpfRecord {
     Author: John Duprey
     #>
     [CmdletBinding(DefaultParameterSetName = 'Lookup')]
-    Param(
+    param(
         [Parameter(Mandatory = $true, ParameterSetName = 'Lookup')]
         [Parameter(ParameterSetName = 'Manual')]
         [string]$Domain,
@@ -457,6 +457,30 @@ function Read-SpfRecord {
 
         if ($AllMechanism -eq '-all') {
             $ValidationPasses.Add('The SPF record ends with a hard fail qualifier (-all). This is best practice and will instruct recipients to discard unauthorized senders.') | Out-Null
+        }
+
+        elseif ($AllMechanism -eq '~all') {
+            # Check DMARC policy for soft fail
+            $DmarcRejectPolicy = $false
+            try {
+                $DmarcPolicy = Read-DmarcPolicy -Domain $Domain -ErrorAction Stop
+                if ($DmarcPolicy.Policy -eq 'reject' -and ($DmarcPolicy.Percent -eq 100 -or $null -eq $DmarcPolicy.Percent)) {
+                    $DmarcRejectPolicy = $true
+                }
+            } catch {
+                Write-Verbose "Unable to read DMARC policy: $($_.Exception.Message)"
+            }
+
+            if ($DmarcRejectPolicy) {
+                $ValidationPasses.Add('The SPF record ends with a soft fail qualifier (~all). With DMARC p=reject at 100%, this is acceptable as DMARC will enforce rejection.') | Out-Null
+            } else {
+                $ValidationFails.Add('The SPF record should end in -all to prevent spamming.') | Out-Null
+                $Recommendations.Add([PSCustomObject]@{
+                        Message = "Replace '~all' with '-all' to make a SPF failure result in a hard fail."
+                        Match   = '~all'
+                        Replace = '-all'
+                    }) | Out-Null
+            }
         }
 
         elseif ($Record -ne '') {

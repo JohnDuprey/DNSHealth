@@ -60,13 +60,13 @@ function Read-MXRecord {
     elseif ($Result.Status -ne 0 -or -not ($Result.Answer)) {
         if ($Result.Status -eq 3) {
             $ValidationFails.Add($NoMxValidation) | Out-Null
-            $MXResults.MailProvider = Get-Content "$PSScriptRoot\MailProviders\Null.json" | ConvertFrom-Json
+            $MXResults.MailProvider = Get-Content "$script:MailProvidersPath\Null.json" | ConvertFrom-Json
             $MXResults.Selectors = $MXRecords.MailProvider.Selectors
         }
 
         else {
             $ValidationFails.Add($NoMxValidation) | Out-Null
-            $MXResults.MailProvider = Get-Content "$PSScriptRoot\MailProviders\Null.json" | ConvertFrom-Json
+            $MXResults.MailProvider = Get-Content "$script:MailProvidersPath\Null.json" | ConvertFrom-Json
             $MXResults.Selectors = $MXRecords.MailProvider.Selectors
         }
         $MXRecords = $null
@@ -88,17 +88,17 @@ function Read-MXRecord {
         $MXRecords = $MXRecords | Sort-Object -Property Priority
 
         # Attempt to identify mail provider based on MX record
-        if (Test-Path "$PSScriptRoot\MailProviders") {
+        if (Test-Path "$script:MailProvidersPath") {
             $ReservedVariables = @{
                 'DomainNameDashNotation' = $Domain -replace '\.', '-'
             }
             if ($MXRecords.Hostname -eq '') {
                 $ValidationFails.Add($NoMxValidation) | Out-Null
-                $MXResults.MailProvider = Get-Content "$PSScriptRoot\MailProviders\Null.json" | ConvertFrom-Json
+                $MXResults.MailProvider = Get-Content "$script:MailProvidersPath\Null.json" | ConvertFrom-Json
             }
 
             else {
-                $ProviderList = Get-ChildItem "$PSScriptRoot\MailProviders" -Exclude '_template.json' | ForEach-Object {
+                $ProviderList = Get-ChildItem "$script:MailProvidersPath" -Exclude '_template.json' | ForEach-Object {
                     try { Get-Content $_ | ConvertFrom-Json -ErrorAction Stop }
                     catch { Write-Verbose $_.Exception.Message }
                 }
