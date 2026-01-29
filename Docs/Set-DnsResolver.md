@@ -52,7 +52,7 @@ Accept wildcard characters: False
 Type: String
 Parameter Sets: (All)
 Aliases:
-Accepted values: Google, Cloudflare, Quad9
+Accepted values: Google, Cloudflare
 
 Required: False
 Position: 0
