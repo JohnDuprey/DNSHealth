@@ -4,11 +4,11 @@ $Private = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction Silen
 
 #Dot source the files
 foreach ($import in @($Public + $Private)) {
-    Try {
+    try {
         . $import.fullName
     }
 
-    Catch {
+    catch {
         Write-Error -Message "Failed to import function $($import.fullName): $_"
     }
 }
@@ -17,8 +17,5 @@ foreach ($import in @($Public + $Private)) {
 # Export Public functions ($Public.BaseName) for WIP modules
 # Set variables visible to the module and its functions only
 Add-Type -AssemblyName System.Web
-
-# Set module-level variable for MailProviders path
-Set-Variable -Name 'MailProvidersPath' -Value "$PSScriptRoot\MailProviders" -Scope Script
 
 Export-ModuleMember -Function $Public.Basename -Alias *
